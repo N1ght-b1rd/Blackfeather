@@ -1,0 +1,32 @@
+# Build / dist artifacts
+build/
+dist/
+*.egg-info/
+*.spec
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtualenv
+.venv/
+venv/
+env/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Testes
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Tools baixadas (ysoserial, phpggc, etc)
+tools/
