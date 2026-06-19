@@ -81,9 +81,11 @@ class PeelEngine:
         )
 
     def peel(self, data: bytes) -> PeelResult:
-        
+
         result = PeelResult(raw_data=data, final_size=len(data))
         current = data
+        prev_decoder: Optional[str] = None
+        prev_output: Optional[bytes] = None
 
         for depth in range(MAX_PEEL_DEPTH):
             matched_decoder: Optional[BaseDecoder] = None
@@ -101,7 +103,7 @@ class PeelEngine:
             if matched_decoder is None or matched_result is None:
                 break
 
-            
+
             is_one_way = matched_result.__dict__.get("is_one_way", False)
             if is_one_way:
                 result.add_step(PipelineStep(
@@ -116,8 +118,13 @@ class PeelEngine:
                 result.final_size = len(current)
                 return result
 
-            # Detecta loop infinito e para
-            if matched_result.decoded_size >= matched_result.original_size:
+            # Detecta loop infinito real: mesmo decoder + mesmo output da iteracao anterior
+            # (gzip em pickle pequena EXPANDE bytes, isso nao e loop, e sinal normal de compressor)
+            if (
+                prev_decoder is not None
+                and matched_decoder.name == prev_decoder
+                and matched_result.data == prev_output
+            ):
                 result.stopped_at_max_depth = True
                 result.raw_data = current
                 result.final_size = len(current)
@@ -130,6 +137,8 @@ class PeelEngine:
                 is_one_way=False,
             ))
 
+            prev_decoder = matched_decoder.name
+            prev_output = matched_result.data
             current = matched_result.data
             result.raw_data = current
             result.final_size = len(current)
